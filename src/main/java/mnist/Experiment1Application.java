@@ -2,9 +2,12 @@ package mnist;
 
 import ai.djl.*;
 import ai.djl.basicdataset.cv.ImageDataset;
+import ai.djl.basicdataset.cv.classification.AbstractImageFolder;
 import ai.djl.basicdataset.cv.classification.ImageClassificationDataset;
 import ai.djl.basicdataset.cv.classification.ImageFolder;
 import ai.djl.basicdataset.cv.classification.Mnist;
+import ai.djl.modality.cv.Image;
+import ai.djl.modality.cv.transform.Normalize;
 import ai.djl.modality.cv.transform.Resize;
 import ai.djl.modality.cv.transform.ToTensor;
 import ai.djl.ndarray.NDArray;
@@ -16,7 +19,9 @@ import ai.djl.nn.core.Linear;
 import ai.djl.nn.pooling.Pool;
 import ai.djl.repository.Repository;
 import ai.djl.training.*;
+import ai.djl.training.dataset.BatchSampler;
 import ai.djl.training.dataset.Dataset;
+import ai.djl.training.dataset.RandomAccessDataset;
 import ai.djl.training.evaluator.Accuracy;
 import ai.djl.training.listener.TrainingListener;
 import ai.djl.training.loss.Loss;
@@ -28,9 +33,14 @@ import ai.djl.translate.TranslateException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class Experiment1Application {
@@ -76,8 +86,7 @@ public class Experiment1Application {
 
         ArrayList<Model> models = new ArrayList<>();
 
-        // TODO: replace
-        for(int i=1; i < numberOfModels;i++){
+        for(int i=0; i < numberOfModels;i++){
 
             Model model = Model.newInstance("Model("+i+")");
             SequentialBlock sequentialBlock = new SequentialBlock();
@@ -126,7 +135,7 @@ public class Experiment1Application {
     public static TrainingConfig createTrainingConfig(){
 
         // 60.000 := mnist Dataset size
-        Tracker annealer = new Annealer(batchSize,(int)(60000 * trainingDatasetPercentage),1E-3f,0.8f);
+        Tracker annealer = new Annealer(batchSize,(int)(60000 * trainingDatasetPercentage),1E-3f,0.95f);
         Optimizer adam = Optimizer
                 .adam()
                 .optWeightDecays(0.001f) // in default adam von keras aus beispiel nicht verwendet
@@ -147,55 +156,61 @@ public class Experiment1Application {
     }
 
 
+    // unnötig -> Test ergibt scho als grey scale erkannt
+    public static void convert3Channelto1Channel() throws IOException {
+
+        // for folders in trainingSet
+        // for files in current folder
+        File[] classDirectories = new File("./src/main/resources/data/trainingSet/").listFiles(File::isDirectory);
+        System.out.println("Found Classes: " + Arrays.stream(classDirectories).map(label -> label.toString()).collect(Collectors.toList()));
+
+        for (File currentDirectory : classDirectories) {
+            File[] imagesOfCurrentClass = currentDirectory.listFiles(File::isFile);
+            System.out.println("Found images in current class: " + imagesOfCurrentClass.length);
+
+            for (File currentImage : imagesOfCurrentClass) {
+                BufferedImage before = ImageIO.read(currentImage);
+                BufferedImage test = new BufferedImage(28,28,BufferedImage.TYPE_BYTE_GRAY);
+                System.out.println("Before "+before.getType() + " Grey mofo: "+test.getType());
+                //File after = new File(currentImage.getAbsolutePath());
+            }
+        }
+    }
+
+
 
     // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
     // 2. in assets Folder legen nur trainingSet // Achtung doppelt verschachtelt: trainingSet/trainingSet
     public static Dataset[] createMnistCustomSimple() throws TranslateException, IOException {
         Dataset[] datasets = new Dataset[2];
 
-        Repository repository = Repository.newInstance("trainingSet", Paths.get("/src/main/resources/trainingSet"));
+
+        Repository repository = Repository.newInstance("trainingSet", Paths.get("./src/main/resources/data/trainingSet/"));
+        System.out.println("Data path: " + Paths.get("./src/main/resources/data/trainingSet/"));
+
+
         ImageFolder dataset = ImageFolder.builder()
                 .setRepository(repository)
                 .addTransform(new Resize(28, 28))
                 .addTransform(new ToTensor())
                 .setSampling(batchSize, false)
+                .optFlag(Image.Flag.GRAYSCALE)
                 .build();
 
+        //Image.Flag.GRAYSCALE
         dataset.prepare(new ProgressBar());
+
+
+        System.out.println("Dataset image channels: "+ dataset.getImageChannels());
+        System.out.println("Dataset size "+ dataset.size());
+        System.out.println("Classes: "+ dataset.getClasses());
+
 
         int divider = (int)(dataset.size() * trainingDatasetPercentage);
         Dataset trainingDataset = dataset.subDataset(0,divider);
         Dataset validationDataset = dataset.subDataset(divider,(int)(dataset.size()));
         datasets[0] = trainingDataset;
         datasets[1] = validationDataset;
-        return datasets;
-    }
-
-    // Get Training and validiation Dataset
-    public static Dataset[] splitMnist() throws TranslateException, IOException {
-
-        Dataset[] datasets = new Dataset[2];
-
-        Mnist mnist = Mnist.builder().setSampling(batchSize,false).build();
-        mnist.prepare(new ProgressBar());
-
-        int divider = (int)(mnist.size() * trainingDatasetPercentage);
-        Dataset trainingDataset = mnist.subDataset(0,divider);
-        Dataset validationDataset = mnist.subDataset(divider,(int)(mnist.size()));
-
-
-        trainingDataset.prepare(new ProgressBar());
-        validationDataset.prepare(new ProgressBar());
-
-        datasets[0] = trainingDataset;
-        datasets[1] = validationDataset;
-
-        System.out.println(
-                "Datesets: mnist: " + mnist.size() +
-                        " training: " + divider +
-                        " validationDatasetSize: " + (mnist.size() - divider)
-        );
-
         return datasets;
     }
 
@@ -232,6 +247,38 @@ public class Experiment1Application {
 
 
     }
+
+
+
+
+    // Get Training and validiation Dataset
+    public static Dataset[] splitMnist() throws TranslateException, IOException {
+
+        Dataset[] datasets = new Dataset[2];
+
+        Mnist mnist = Mnist.builder().setSampling(batchSize,false).build();
+        mnist.prepare(new ProgressBar());
+
+        int divider = (int)(mnist.size() * trainingDatasetPercentage);
+        Dataset trainingDataset = mnist.subDataset(0,divider);
+        Dataset validationDataset = mnist.subDataset(divider,(int)(mnist.size()));
+
+
+        trainingDataset.prepare(new ProgressBar());
+        validationDataset.prepare(new ProgressBar());
+
+        datasets[0] = trainingDataset;
+        datasets[1] = validationDataset;
+
+        System.out.println(
+                "Datesets: mnist: " + mnist.size() +
+                        " training: " + divider +
+                        " validationDatasetSize: " + (mnist.size() - divider)
+        );
+
+        return datasets;
+    }
+
 
 
 

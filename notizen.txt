@@ -301,3 +301,23 @@ NDArray
 
 
 
+
+### Problem: ImageFolder 3 Channel obwohl ich grey scale image brauche
+
+--> Viel zu lnage benötigt um:
+
+ .optFlag(Image.Flag.GRAYSCALE) zu finden
+
+
+        ImageFolder dataset = ImageFolder.builder()
+                .setRepository(repository)
+                .addTransform(new Resize(28, 28))
+                .addTransform(new ToTensor())
+                .setSampling(batchSize, false)
+                .optFlag(Image.Flag.GRAYSCALE)
+                .build();
+
+
+Da sonst unklar was mit dem Flag möglich, auf tieferer Ebene ist  Image.Flag flag   aber oben  nur abstrakt Flag könnte alles sein
+Finden nur möglich indem man implementierte Interfaces und Klassen durchsucht.
+
