@@ -321,3 +321,8 @@ NDArray
 Da sonst unklar was mit dem Flag möglich, auf tieferer Ebene ist  Image.Flag flag   aber oben  nur abstrakt Flag könnte alles sein
 Finden nur möglich indem man implementierte Interfaces und Klassen durchsucht.
 
+
+### Test auf no remote rechner mit starker gpu:
+
+--> nicht automatishc erkannt wie beschrieben
+

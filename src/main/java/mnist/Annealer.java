@@ -36,7 +36,7 @@ public class Annealer implements Tracker {
     public float getNewValue(int numUpdate) {
 
         boolean didNotUpdate = lastUpdateNum != numUpdate;
-        boolean isNewEpoch = (numUpdate + (numUpdate == 1 ? 0 : -1)) % (trainingDatasetSize / batchsize) == 0; // test ob -1 wie gewünscht
+        boolean isNewEpoch = numUpdate  % (trainingDatasetSize / batchsize) == 0; // test ob -1 wie gewünscht
 
         if(isNewEpoch && didNotUpdate){
             updateLernrate(numUpdate);

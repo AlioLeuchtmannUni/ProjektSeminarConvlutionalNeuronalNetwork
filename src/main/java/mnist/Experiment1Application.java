@@ -19,10 +19,12 @@ import ai.djl.nn.core.Linear;
 import ai.djl.nn.pooling.Pool;
 import ai.djl.repository.Repository;
 import ai.djl.training.*;
+import ai.djl.training.dataset.Batch;
 import ai.djl.training.dataset.BatchSampler;
 import ai.djl.training.dataset.Dataset;
 import ai.djl.training.dataset.RandomAccessDataset;
 import ai.djl.training.evaluator.Accuracy;
+import ai.djl.training.evaluator.Evaluator;
 import ai.djl.training.listener.TrainingListener;
 import ai.djl.training.loss.Loss;
 import ai.djl.training.optimizer.Optimizer;
@@ -134,7 +136,6 @@ public class Experiment1Application {
 
     public static TrainingConfig createTrainingConfig(int trainingSetSize){
 
-        // 60.000 := mnist Dataset size
         Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.95f);
         Optimizer adam = Optimizer
                 .adam()
@@ -147,9 +148,10 @@ public class Experiment1Application {
                 .build();
 
         // softmaxCrossEntropyLoss anstelle von  categorical_crossentropy
-        DefaultTrainingConfig trainingConfig = new DefaultTrainingConfig(Loss.softmaxCrossEntropyLoss())
+        TrainingConfig trainingConfig = new DefaultTrainingConfig(Loss.softmaxCrossEntropyLoss())
                 .optOptimizer(adam)
                 .addEvaluator(new Accuracy())
+                //.optDevices(new Device[]{Device.gpu()}) // TODO: test on remote
                 .addTrainingListeners(TrainingListener.Defaults.logging());
 
         return trainingConfig;
@@ -157,8 +159,8 @@ public class Experiment1Application {
 
     // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
     // 2. in assets Folder legen nur trainingSet // Achtung doppelt verschachtelt: trainingSet/trainingSet
-    public static Dataset[] createMnistCustomSimple() throws IOException {
-        Dataset[] datasets = new Dataset[2];
+    public static Dataset[] createMnistCustomSimple() throws IOException, TranslateException {
+
         Repository repository = Repository.newInstance("trainingSet", Paths.get("./src/main/resources/data/trainingSet/"));
         System.out.println("Data path: " + Paths.get("./src/main/resources/data/trainingSet/"));
 
@@ -176,13 +178,12 @@ public class Experiment1Application {
         System.out.println("Loaded Dataset size "+ dataset.size());
         System.out.println("Dataset Classes: "+ dataset.getClasses());
 
-        int divider = (int)(dataset.size() * trainingDatasetPercentage);
-        Dataset trainingDataset = dataset.subDataset(0,divider);
-        Dataset validationDataset = dataset.subDataset(divider,(int)(dataset.size()));
-        datasets[0] = trainingDataset;
-        datasets[1] = validationDataset;
-        return datasets;
+        return dataset.randomSplit(10,1);
     }
+
+
+
+
 
     public static void main(String[] args) {
         SpringApplication.run(Experiment1Application.class, args);
@@ -202,11 +203,16 @@ public class Experiment1Application {
                 Trainer trainer = models.get(i).newTrainer(trainingConfig);
                 trainer.initialize(new Shape(batchSize, 1, 28, 28));
 
+                System.out.println("Device used for Training: " + trainer.getDevices()[0].toString() );
+
+
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
                 TrainingResult result = trainer.getTrainingResult();
                 trainer.close();
-
                 System.out.println(result);
+
+
+
             }catch (Exception e) {
                 System.out.println(e.getMessage());
                 System.exit(-1);
