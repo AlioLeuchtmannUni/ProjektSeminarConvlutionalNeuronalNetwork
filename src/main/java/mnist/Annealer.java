@@ -29,7 +29,6 @@ public class Annealer implements Tracker {
         epoch++;
         lastUpdateNum = numUpdate;
         lr = baseLr * (float) Math.pow(factor,epoch);
-        //lr *= (float) Math.pow(factor,epoch);
         System.out.println("Current Learnrate: " + lr + " Epoch: " + epoch + " numUpdates(Batch iterations): " + numUpdate + " Batch size: "+batchsize);
     }
 

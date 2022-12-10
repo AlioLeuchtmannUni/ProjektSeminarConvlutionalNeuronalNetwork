@@ -86,7 +86,7 @@ public class Experiment1Application {
 
         ArrayList<Model> models = new ArrayList<>();
 
-        for(int i=0; i < numberOfModels;i++){
+        for(int i = 0; i < numberOfModels; i++){
 
             Model model = Model.newInstance("Model("+i+")");
             SequentialBlock sequentialBlock = new SequentialBlock();
@@ -132,10 +132,10 @@ public class Experiment1Application {
     }
 
 
-    public static TrainingConfig createTrainingConfig(){
+    public static TrainingConfig createTrainingConfig(int trainingSetSize){
 
         // 60.000 := mnist Dataset size
-        Tracker annealer = new Annealer(batchSize,(int)(60000 * trainingDatasetPercentage),1E-3f,0.95f);
+        Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.95f);
         Optimizer adam = Optimizer
                 .adam()
                 .optWeightDecays(0.001f) // in default adam von keras aus beispiel nicht verwendet
@@ -155,56 +155,26 @@ public class Experiment1Application {
         return trainingConfig;
     }
 
-
-    // unnötig -> Test ergibt scho als grey scale erkannt
-    public static void convert3Channelto1Channel() throws IOException {
-
-        // for folders in trainingSet
-        // for files in current folder
-        File[] classDirectories = new File("./src/main/resources/data/trainingSet/").listFiles(File::isDirectory);
-        System.out.println("Found Classes: " + Arrays.stream(classDirectories).map(label -> label.toString()).collect(Collectors.toList()));
-
-        for (File currentDirectory : classDirectories) {
-            File[] imagesOfCurrentClass = currentDirectory.listFiles(File::isFile);
-            System.out.println("Found images in current class: " + imagesOfCurrentClass.length);
-
-            for (File currentImage : imagesOfCurrentClass) {
-                BufferedImage before = ImageIO.read(currentImage);
-                BufferedImage test = new BufferedImage(28,28,BufferedImage.TYPE_BYTE_GRAY);
-                System.out.println("Before "+before.getType() + " Grey mofo: "+test.getType());
-                //File after = new File(currentImage.getAbsolutePath());
-            }
-        }
-    }
-
-
-
     // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
     // 2. in assets Folder legen nur trainingSet // Achtung doppelt verschachtelt: trainingSet/trainingSet
-    public static Dataset[] createMnistCustomSimple() throws TranslateException, IOException {
+    public static Dataset[] createMnistCustomSimple() throws IOException {
         Dataset[] datasets = new Dataset[2];
-
-
         Repository repository = Repository.newInstance("trainingSet", Paths.get("./src/main/resources/data/trainingSet/"));
         System.out.println("Data path: " + Paths.get("./src/main/resources/data/trainingSet/"));
-
 
         ImageFolder dataset = ImageFolder.builder()
                 .setRepository(repository)
                 .addTransform(new Resize(28, 28))
                 .addTransform(new ToTensor())
-                .setSampling(batchSize, false)
+                .setSampling(batchSize, true)
                 .optFlag(Image.Flag.GRAYSCALE)
                 .build();
 
         //Image.Flag.GRAYSCALE
         dataset.prepare(new ProgressBar());
 
-
-        System.out.println("Dataset image channels: "+ dataset.getImageChannels());
-        System.out.println("Dataset size "+ dataset.size());
-        System.out.println("Classes: "+ dataset.getClasses());
-
+        System.out.println("Loaded Dataset size "+ dataset.size());
+        System.out.println("Dataset Classes: "+ dataset.getClasses());
 
         int divider = (int)(dataset.size() * trainingDatasetPercentage);
         Dataset trainingDataset = dataset.subDataset(0,divider);
@@ -222,17 +192,15 @@ public class Experiment1Application {
         for(int i = 0; i < models.size(); i++) {
             System.out.println("\n \n Training Model " + models.get(i).getName() + "\n");
 
-            TrainingConfig trainingConfig = createTrainingConfig();
-            Trainer trainer = models.get(i).newTrainer(trainingConfig);
-            trainer.initialize(new Shape(batchSize, 1, 28, 28));
-
             try {
-
                 //Dataset[] datasets = splitMnist();
                 Dataset[] datasets = createMnistCustomSimple();
-
                 Dataset trainingDataset = datasets[0];
                 Dataset validationDataset = datasets[1];
+
+                TrainingConfig trainingConfig = createTrainingConfig((int)(42000 * trainingDatasetPercentage));
+                Trainer trainer = models.get(i).newTrainer(trainingConfig);
+                trainer.initialize(new Shape(batchSize, 1, 28, 28));
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
                 TrainingResult result = trainer.getTrainingResult();
@@ -280,6 +248,26 @@ public class Experiment1Application {
     }
 
 
+    // unnötig -> Test ergibt scho als grey scale erkannt
+    public static void convert3Channelto1Channel() throws IOException {
+
+        // for folders in trainingSet
+        // for files in current folder
+        File[] classDirectories = new File("./src/main/resources/data/trainingSet/").listFiles(File::isDirectory);
+        System.out.println("Found Classes: " + Arrays.stream(classDirectories).map(label -> label.toString()).collect(Collectors.toList()));
+
+        for (File currentDirectory : classDirectories) {
+            File[] imagesOfCurrentClass = currentDirectory.listFiles(File::isFile);
+            System.out.println("Found images in current class: " + imagesOfCurrentClass.length);
+
+            for (File currentImage : imagesOfCurrentClass) {
+                BufferedImage before = ImageIO.read(currentImage);
+                BufferedImage test = new BufferedImage(28,28,BufferedImage.TYPE_BYTE_GRAY);
+                System.out.println("Before "+before.getType() + " Grey mofo: "+test.getType());
+                //File after = new File(currentImage.getAbsolutePath());
+            }
+        }
+    }
 
 
 }
