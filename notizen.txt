@@ -1,0 +1,303 @@
+# Ziel:
+
+- Testen von djl am Beispiel ein CNN für mnist datensatz zu bauen
+- Vorbild: Experiment1  https://www.kaggle.com/code/cdeotte/how-to-choose-cnn-architecture-mnist/notebook
+
+## Analyse was passiert, Kommentierte Version des zu implementierenden Quellcodes
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from keras.utils.np_utils import to_categorical
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D, AvgPool2D, BatchNormalization, Reshape
+from keras.preprocessing.image import ImageDataGenerator
+from keras.callbacks import LearningRateScheduler
+import matplotlib.pyplot as plt
+
+# LOAD THE DATA
+
+### ARCHITECTURE:
+- 784 - [24C5-P2] - 256 - 10
+- 784 - [24C5-P2] - [48C5-P2] - 256 - 10
+- 784 - [24C5-P2] - [48C5-P2] - [64C5-P2] - 256 - 10
+
+### LEGENDE:
+- 24C5 means a convolution layer with 24 feature maps using a 5x5 filter and stride 1
+- 24C5S2 means a convolution layer with 24 feature maps using a 5x5 filter and stride 2
+- P2 means max pooling using 2x2 filter and stride 2
+- 256 means fully connected dense layer with 256 units
+
+
+### The input image is 28x28. After one pair, it's 14x14. After two, it's 7x7. After three it's 4x4
+---> Wegen Pooling
+
+#### Trainingsdaten
+train = pd.read_csv("../input/train.csv")
+#### Testdaten
+test = pd.read_csv("../input/test.csv")
+
+# PREPARE DATA FOR NEURAL NETWORK
+Y_train = train["label"]
+X_train = train.drop(labels = ["label"],axis = 1)
+X_train = X_train / 255.0
+X_test = test / 255.0
+X_train = X_train.values.reshape(-1,28,28,1)
+X_test = X_test.values.reshape(-1,28,28,1)
+Y_train = to_categorical(Y_train, num_classes = 10)
+
+# GLOBAL VARIABLES
+annealer = LearningRateScheduler(lambda x: 1e-3 * 0.95 ** x, verbose=0)
+styles=[':','-.','--','-',':','-.','--','-',':','-.','--','-']
+
+nets = 3
+# phyton syntax ersetlle Array der Länge 3 mit 0 initialisiert
+model = [0] *nets
+
+# For Number of Sub-sampling Layers
+for j in range(3):
+  # Initialisiere je ein sequentielles Modell ( Linear Stack of Layers )
+  model[j] = Sequential()
+  # Add Kernel Layer
+  # 24 zu lernende Feature maps
+  # Kernal Size = 5
+  # Stride = 1 ->
+  # Same Padding -> Aufweitung des Input images damit  Input Dimension = Output Dimension
+  model[j].add( Conv2D(24,kernel_size=5,padding='same',activation='relu', input_shape=(28,28,1)) )
+  # Add Pooling Layer
+  # MAX Pooling, Welche Breite ?  --> P2 means max pooling using 2x2 filter and stride 2 -> Default (Stride -> increment der Maske)
+  model[j].add(MaxPool2D())
+
+  # --- In Sub Sampling Layer 2 und 3
+  # 48 zu lernende Feature maps
+  if j > 0:
+     model[j].add(Conv2D(48,kernel_size=5,padding='same',activation='relu'))
+     model[j].add(MaxPool2D())
+
+  # --- In letzten Subsampling Layer
+  if j > 1:
+  # 64 zu lernende Feature maps
+     model[j].add(Conv2D(64,kernel_size=5,padding='same',activation='relu'))
+# hier mit Same Padding auf Pool
+     model[j].add(MaxPool2D(padding='same'))
+
+# Flatten um in MLP zu geben
+model[j].add(Flatten())
+# Dense Layer (Jedes Neuron bekommt Input von allen des Vorgänger Layers)
+# ReLU = Rectified Linear activation Function
+model[j].add(Dense(256, activation='relu'))
+# Dense Layer (Jedes Neuron bekommt Input von allen des Vorgänger Layers)
+# Softmax -> Normalisierung
+model[j].add(Dense(10, activation='softmax'))
+model[j].compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+
+# adam: https://keras.io/api/optimizers/adam/
+Adam optimization is a stochastic gradient descent method that is based on adaptive estimation of first-order and second-order moments.
+# categorical_crossentropy
+Computes the crossentropy loss between the labels and predictions.
+Use this crossentropy loss function when there are two or more label classes.
+# metrics=["accuracy"] -> Um Performance zu bewerten
+
+
+# CREATE VALIDATION SET
+X_train2, X_val2, Y_train2, Y_val2 = train_test_split(X_train, Y_train, test_size = 0.333)
+# TRAIN NETWORKS
+history = [0] * nets
+names = ["(C-P)x1","(C-P)x2","(C-P)x3"]
+epochs = 20
+for j in range(nets):
+history[j] = model[j].fit(X_train2,Y_train2, batch_size=80, epochs = epochs,
+validation_data = (X_val2,Y_val2), callbacks=[annealer], verbose=0)
+print("CNN {0}: Epochs={1:d}, Train accuracy={2:.5f}, Validation accuracy={3:.5f}".format(
+names[j],epochs,max(history[j].history['acc']),max(history[j].history['val_acc']) ))
+
+
+
+### Entwicklung:
+
+
+
+### Probleme:
+
+1. # Wie einen Dense Layer ?
+
+sequentialBlock.add(Linear.builder().setUnits(denseLayerNeuronCount).build()).add(Activation.reluBlock());
+
+3. # Beispiel Model Erstellung gefunden aber veraltet:
+
+https://docs.djl.ai/docs/demos/malicious-url-detector/docs/define_model.html
+
+Conv1D.Builder() Existiert nicht mehr
+Activation.Builder() Existiert nicht mehr ...
+
+Kann umgangen werden in dem man alte Version nutzt, Beispielsweise 0.2.1
+
+
+3. # Expected layout: NCHW, but got: ???
+-> Fehler bei trainer initialize
+
+NCHW stands for:
+batch N, channels C, depth D, height H, width W
+
+        /*
+        https://javadoc.io/doc/ai.djl/api/0.4.1/ai/djl/nn/convolutional/Conv2D.html
+        The input to a Conv2D is an NDList with a single 4-D NDArray. The layout of the NDArray must be "NCHW".
+        The shapes are
+       ! data: (batch_size, channel, height, width) !
+        Channel beispielsweise 3 := rgb, hier nur 1
+        * */
+
+trainer.initialize(new Shape(32,1,28,28));
+anstelle von: trainer.initialize(new Shape(1,28,28));
+
+5.  # Exception in thread "main" ai.djl.engine.EngineException: No deep learning engine found.
+   --> Add Engine:  Example mnet and maven
+   <dependency>
+   <groupId>ai.djl.mxnet</groupId>
+   <artifactId>mxnet-engine</artifactId>
+   </dependency>
+
+6. # Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 1
+   at ai.djl.ndarray.types.Shape.get(Shape.java:138)
+   at ai.djl.nn.convolutional.Convolution.getOutputShapes(Convolution.java:179)
+   at ai.djl.nn.SequentialBlock.initializeChildBlocks(SequentialBlock.java:225)
+   at ai.djl.nn.AbstractBaseBlock.initialize(AbstractBaseBlock.java:184)
+   at ai.djl.training.Trainer.initialize(Trainer.java:118)
+   at mnist.Experiment1Application.main(Experiment1Application.java:178)
+
+        int size = endIndex - beginIndex;
+        long[] out = new long[size];
+        System.arraycopy(this.shape, beginIndex, out, 0, size); -> System.arraycopy([24,1,5], 2, [0], 0, 1);
+--> BREAKPOINT im debugger -> size = 1 also eigentlich kein Problem
+
+(Object src, int srcPos, Object dest, int destPos, int length)
+--> kopiere 5 nach out index 0 eigentlich kein PROBLEM !!!!
+
+--> Download Sourves für besseres Debugging als mit Decompiler -->
+
+    /*
+
+    *     @Override
+    public Shape[] getOutputShapes(Shape[] inputs) {
+        long[] shape = new long[numDimensions()];
+        shape[0] = inputs[0].get(0);
+        shape[1] = filters;
+        for (int i = 0; i < numDimensions() - 2; i++) {
+            shape[2 + i] =
+                    (inputs[0].get(2 + i)
+                                            + 2 * padding.get(i) // TODO: HIER PROBLEM
+                                            - dilation.get(i) * (kernelShape.get(i) - 1)
+                                            - 1)
+                                    / stride.get(i)
+                            + 1;
+        }
+        return new Shape[] {new Shape(shape)};
+    }
+
+    // TODO: -> Shape in given dimension
+    public long get(int dimension) {
+        return shape[dimension];
+    }
+
+--> Ergebnis Shapes,Padding,Stride und co Brauchen Dimension 2.
+Hier nicht default
+
+Exception in thread "main" java.lang.IllegalArgumentException: kernelShape, Stride and Padding dimensions for maxPool2d should be 2
+
+--> Selbes gilt somit auch nicht nur Für conv2d sondern auch die Pools
+(Anmerkung im Falle der Pools wenigstens sehr gute Fehlermedlung, dies fehlt bei Conv2D Klasse)
+
+
+7. # The Loss became NaN, try reduce learning rate,add clipGradient option to your optimizer, check input data and loss calculation.
+
+--> Aus irgendeinem Grund hat Batchsize 32 -> 100 das Problem behoben
+--> Später wieder aufgetreten -> Parameter änder notwendig
+
+
+https://towardsdatascience.com/deep-java-library-djl-a-deep-learning-toolkit-for-java-developers-55d5a45bca7e
+--> Params Probiert
+
+8. # Wie setze ich diesen Annealer um Keras: LearningRateScheduler(lambda x: 1e-3 * 0.95 ** x, verbose=0)
+https://analyticsindiamag.com/how-to-use-learning-rate-annealing-with-neural-networks/
+
+LearningRateScheduler(lambda x: 1e-3 * 0.95 ** x, verbose=0)
+
+LearningRateScheduler(schedule, verbose=0)
+
+In new Keras API you can use more general version of schedule function which takes two arguments epoch and l r.
+From docs:
+schedule: a function that takes an epoch index as input (integer, indexed from 0)
+and current learning rate and returns a new learning rate as output (float).
+
+        lambda x: 1e-3 * 0.95 ** x,  // Hat aber nur einen Parameter ???
+
+        ** in Phyton arithemtische auswertung
+
+
+        MultiFactorTracker learningRateTracker = MultiFactorTracker
+                .builder()
+                .setSteps(steps)
+                .optFactor(0.95f)
+                .setBaseValue(1e-3f)
+                .build();
+
+Anderes Beispiel ->
+LearningRateScheduler(lambda epoch: 1e-2 * (0.80 ** np.floor(epoch / 2)))
+-> x ist current epoch -> learning rate irgendwo automatisch
+
+--> Also anwendung bei jedem epoch
+
+https://d2l.djl.ai/chapter_optimization/lr-scheduler.html#factor-tracker
+
+9. # Es wäre wünschenswert wenn irgendwo erklärt worden wäre was numUpdate bei Tracker bedeutet
+
+10. # Wie Softmax Activation ?
+Activation.relu vorhanden aber nicht softmax
+-> Untersuchung der Klasse Activation  in docs -> softmax nicht vorhanden
+
+Schaue in Github Code um eigene Implementation zu schreiben:
+
+https://github.com/deepjavalibrary/djl/blob/master/api/src/main/java/ai/djl/nn/Activation.java
+
+public static Block seluBlock() {
+# bekommt Funktion mit IN und OUT NDList sowie einen Bezeichner, für meine zwecke egal -> DEFAULT
+return new LambdaBlock(Activation::selu, "SELU");
+}
+
+public static NDList selu(NDList arrays) {
+# Erstelle NDList aus NDArray auf das die Funktion angewandt wurde
+return new NDList(arrays.singletonOrThrow().getNDArrayInternal().selu());
+}
+
+https://github.com/deepjavalibrary/djl/blob/master/api/src/main/java/ai/djl/nn/LambdaBlock.java
+
+public LambdaBlock(Function<NDList, NDList> lambda, String name) {
+super(VERSION);
+this.lambda = lambda;
+this.name = name;
+}
+
+Untersuche: new NDList().singletonOrThrow().getNDArrayInternal()
+--> untersützt auch kein softmax
+
+
+## Um softmax Block zu implementieren:
+
+Aus der Doku:
+LambdaBlock is a Block with no parameters or children.
+LambdaBlock allows converting any function that takes an NDList as input and returns an NDList into a parameter-less and child-less Block.
+
+1. Erstelle Lambdablock und gebe Softmax implementation als Parameter !
+
+NDList
+   An NDList represents a sequence of NDArrays with names.
+   Each NDArray in this list can optionally have a name. You can use the name to look up an NDArray in the NDList.
+
+NDArray
+--> Docs entdeckung NDArray verfügt über softmax implementation
+
+
+### Javadoc instanz läd stets sehr langsam -> download erforderlich
+
+
+
