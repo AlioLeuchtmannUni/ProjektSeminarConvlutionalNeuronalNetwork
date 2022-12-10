@@ -143,20 +143,36 @@ public class Experiment1Application {
 
 
     // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
-    // 2. in assets Folder legen
+    // 2. in assets Folder legen (trainingSet,testSet) // Achtung doppelt verschachtelt: trainingSet/trainingSet
     public static Dataset[] createMnistDatasetCustom() throws TranslateException, IOException {
         Dataset[] datasets = new Dataset[2];
 
-        // Alternativ: ein Dataset aus allen daten -> dann split wie unten für mnist
+        // Alternativ: ein Dataset aus allen daten -> dann split wie unten für mnist // siehe createMnistCustomSimple
 
-        CustomImageClassificationDataset trainingDataset = new CustomImageClassificationDataset(batchSize,28,28,"trainingSet","./assets",false);
-        CustomImageClassificationDataset validationDataset = new CustomImageClassificationDataset(batchSize,28,28,"validationSet","./assets",false);
+        CustomImageClassificationDataset trainingDataset = new CustomImageClassificationDataset(batchSize,28,28,"trainingSet","src/main/resources/assets/data",false);
+        CustomImageClassificationDataset validationDataset = new CustomImageClassificationDataset(batchSize,28,28,"testSet","src/main/resources/assets/data",false);
         trainingDataset.prepare(new ProgressBar());
         validationDataset.prepare(new ProgressBar());
 
         return datasets;
     }
 
+
+    // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
+    // 2. in assets Folder legen nur trainingSet // Achtung doppelt verschachtelt: trainingSet/trainingSet
+    public static Dataset[] createMnistCustomSimple() throws TranslateException, IOException {
+        Dataset[] datasets = new Dataset[2];
+
+        CustomImageClassificationDataset dataset = new CustomImageClassificationDataset(batchSize,28,28,"trainingSet","src/main/resources/assets/data",false);
+        dataset.prepare(new ProgressBar());
+
+        int divider = (int)(dataset.size() * trainingDatasetPercentage);
+        Dataset trainingDataset = dataset.subDataset(0,divider);
+        Dataset validationDataset = dataset.subDataset(divider,(int)(dataset.size()));
+        datasets[0] = trainingDataset;
+        datasets[1] = validationDataset;
+        return datasets;
+    }
 
     // Get Training and validiation Dataset
     public static Dataset[] splitMnist() throws TranslateException, IOException {
@@ -200,7 +216,9 @@ public class Experiment1Application {
 
             try {
 
-                Dataset[] datasets = splitMnist();
+                //Dataset[] datasets = splitMnist();
+                Dataset[] datasets = createMnistCustomSimple();
+
                 Dataset trainingDataset = datasets[0];
                 Dataset validationDataset = datasets[1];
 

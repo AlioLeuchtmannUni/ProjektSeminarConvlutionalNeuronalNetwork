@@ -16,6 +16,15 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
+/*
+Creates Image Classification Dataset.
+
+requires Structured Image Data.
+
+Folder Structure   folderName/label1/imagesOfClassLabel1 , folderName/label2/imagesOfClassLabel2
+
+and automatically creates Labeled Data
+* */
 public class CustomImageClassificationDataset extends ImageClassificationDataset {
 
     ImageFolder dataset; // https://javadoc.io/doc/ai.djl/basicdataset/latest/ai/djl/basicdataset/cv/classification/ImageFolder.html
