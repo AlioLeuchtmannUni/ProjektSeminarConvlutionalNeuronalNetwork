@@ -3,7 +3,10 @@ package mnist;
 import ai.djl.*;
 import ai.djl.basicdataset.cv.ImageDataset;
 import ai.djl.basicdataset.cv.classification.ImageClassificationDataset;
+import ai.djl.basicdataset.cv.classification.ImageFolder;
 import ai.djl.basicdataset.cv.classification.Mnist;
+import ai.djl.modality.cv.transform.Resize;
+import ai.djl.modality.cv.transform.ToTensor;
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.types.Shape;
@@ -11,6 +14,7 @@ import ai.djl.nn.*;
 import ai.djl.nn.convolutional.Conv2d;
 import ai.djl.nn.core.Linear;
 import ai.djl.nn.pooling.Pool;
+import ai.djl.repository.Repository;
 import ai.djl.training.*;
 import ai.djl.training.dataset.Dataset;
 import ai.djl.training.evaluator.Accuracy;
@@ -25,6 +29,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 @SpringBootApplication
@@ -142,28 +147,20 @@ public class Experiment1Application {
     }
 
 
-    // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
-    // 2. in assets Folder legen (trainingSet,testSet) // Achtung doppelt verschachtelt: trainingSet/trainingSet
-    public static Dataset[] createMnistDatasetCustom() throws TranslateException, IOException {
-        Dataset[] datasets = new Dataset[2];
-
-        // Alternativ: ein Dataset aus allen daten -> dann split wie unten für mnist // siehe createMnistCustomSimple
-
-        CustomImageClassificationDataset trainingDataset = new CustomImageClassificationDataset(batchSize,28,28,"trainingSet","src/main/resources/assets/data",false);
-        CustomImageClassificationDataset validationDataset = new CustomImageClassificationDataset(batchSize,28,28,"testSet","src/main/resources/assets/data",false);
-        trainingDataset.prepare(new ProgressBar());
-        validationDataset.prepare(new ProgressBar());
-
-        return datasets;
-    }
-
 
     // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
     // 2. in assets Folder legen nur trainingSet // Achtung doppelt verschachtelt: trainingSet/trainingSet
     public static Dataset[] createMnistCustomSimple() throws TranslateException, IOException {
         Dataset[] datasets = new Dataset[2];
 
-        CustomImageClassificationDataset dataset = new CustomImageClassificationDataset(batchSize,28,28,"trainingSet","src/main/resources/assets/data",false);
+        Repository repository = Repository.newInstance("trainingSet", Paths.get("/src/main/resources/trainingSet"));
+        ImageFolder dataset = ImageFolder.builder()
+                .setRepository(repository)
+                .addTransform(new Resize(28, 28))
+                .addTransform(new ToTensor())
+                .setSampling(batchSize, false)
+                .build();
+
         dataset.prepare(new ProgressBar());
 
         int divider = (int)(dataset.size() * trainingDatasetPercentage);
