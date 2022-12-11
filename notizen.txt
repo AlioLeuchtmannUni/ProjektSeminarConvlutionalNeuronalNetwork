@@ -322,7 +322,49 @@ Da sonst unklar was mit dem Flag möglich, auf tieferer Ebene ist  Image.Flag fl
 Finden nur möglich indem man implementierte Interfaces und Klassen durchsucht.
 
 
-### Test auf no remote rechner mit starker gpu:
+### Test auf Rechner mit starker gpu:
 
---> nicht automatishc erkannt wie beschrieben
+--> nicht automatisch erkannt wie beschrieben
+
+### Teste verschiedene Engines:
+
+[x] mxnet
+[] pytorch
+[] tensorflow
+
+
+### Performance:
+
+Architektur:                       x86_64
+  CPU Operationsmodus:             32-bit, 64-bit
+  Adressgrößen:                    39 bits physical, 48 bits virtual
+  Byte-Reihenfolge:                Little Endian
+CPU(s):                            16
+  Liste der Online-CPU(s):         0-15
+Anbieterkennung:                   GenuineIntel
+  Modellname:                      Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz
+    Prozessorfamilie:              6
+    Modell:                        158
+    Thread(s) pro Kern:            2
+    Kern(e) pro Sockel:            8
+    Sockel:                        1
+    Stepping:                      12
+    Maximale Taktfrequenz der CPU: 5000,0000
+    Minimale Taktfrequenz der CPU: 800,0000
+    BogoMIPS:                      7200.00
+Virtualisierungsfunktionen:
+  Virtualisierung:                 VT-x
+Caches (Gesamtsumme):
+  L1d:                             256 KiB (8 Instanzen)
+  L1i:                             256 KiB (8 Instanzen)
+  L2:                              2 MiB (8 Instanzen)
+  L3:                              16 MiB (1 Instanz)
+NUMA:
+  NUMA-Knoten:                     1
+  NUMA-Knoten0 CPU(s):             0-15
+
+
+  # https://www.nvidia.com/content/DriverDownloads/confirmation.php?url=/XFree86/Linux-x86_64/525.60.11/NVIDIA-Linux-x86_64-525.60.11.run&lang=us&type=TITAN
+
+
 

@@ -6,6 +6,7 @@ import ai.djl.basicdataset.cv.classification.AbstractImageFolder;
 import ai.djl.basicdataset.cv.classification.ImageClassificationDataset;
 import ai.djl.basicdataset.cv.classification.ImageFolder;
 import ai.djl.basicdataset.cv.classification.Mnist;
+import ai.djl.engine.Engine;
 import ai.djl.modality.cv.Image;
 import ai.djl.modality.cv.transform.Normalize;
 import ai.djl.modality.cv.transform.Resize;
@@ -32,6 +33,7 @@ import ai.djl.training.tracker.Tracker;
 import ai.djl.training.util.ProgressBar;
 
 import ai.djl.translate.TranslateException;
+import ai.djl.util.cuda.CudaUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -39,14 +41,17 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.MemoryUsage;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class Experiment1Application {
 
+    static final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     public static final int numberOfModels = 3;
     public static final int epochs = 20;
     public static final int batchSize = 64;
@@ -136,7 +141,7 @@ public class Experiment1Application {
 
     public static TrainingConfig createTrainingConfig(int trainingSetSize){
 
-        Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.95f);
+        Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.7f);
         Optimizer adam = Optimizer
                 .adam()
                 .optWeightDecays(0.001f) // in default adam von keras aus beispiel nicht verwendet
@@ -151,7 +156,7 @@ public class Experiment1Application {
         TrainingConfig trainingConfig = new DefaultTrainingConfig(Loss.softmaxCrossEntropyLoss())
                 .optOptimizer(adam)
                 .addEvaluator(new Accuracy())
-                //.optDevices(new Device[]{Device.gpu()}) // TODO: test on remote
+                .optDevices(Engine.getInstance().getDevices())
                 .addTrainingListeners(TrainingListener.Defaults.logging());
 
         return trainingConfig;
@@ -188,13 +193,14 @@ public class Experiment1Application {
     public static void main(String[] args) {
         SpringApplication.run(Experiment1Application.class, args);
 
+        logger.info("Start");
+
         ArrayList<Model> models = createModels();
 
         for(int i = 0; i < models.size(); i++) {
             System.out.println("\n \n Training Model " + models.get(i).getName() + "\n");
 
             try {
-                //Dataset[] datasets = splitMnist();
                 Dataset[] datasets = createMnistCustomSimple();
                 Dataset trainingDataset = datasets[0];
                 Dataset validationDataset = datasets[1];
@@ -205,19 +211,20 @@ public class Experiment1Application {
 
                 System.out.println("Device used for Training: " + trainer.getDevices()[0].toString() );
 
+                System.out.println("GPU count: " + Engine.getInstance().getGpuCount());
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
                 TrainingResult result = trainer.getTrainingResult();
                 trainer.close();
                 System.out.println(result);
 
-
-
             }catch (Exception e) {
                 System.out.println(e.getMessage());
                 System.exit(-1);
             }
         }
+
+        logger.info("End");
 
 
     }
@@ -226,6 +233,7 @@ public class Experiment1Application {
 
 
     // Get Training and validiation Dataset
+    // EXAMPLE WITH Ready to go mnist Dataset provided by DJL
     public static Dataset[] splitMnist() throws TranslateException, IOException {
 
         Dataset[] datasets = new Dataset[2];
@@ -254,26 +262,6 @@ public class Experiment1Application {
     }
 
 
-    // unnötig -> Test ergibt scho als grey scale erkannt
-    public static void convert3Channelto1Channel() throws IOException {
-
-        // for folders in trainingSet
-        // for files in current folder
-        File[] classDirectories = new File("./src/main/resources/data/trainingSet/").listFiles(File::isDirectory);
-        System.out.println("Found Classes: " + Arrays.stream(classDirectories).map(label -> label.toString()).collect(Collectors.toList()));
-
-        for (File currentDirectory : classDirectories) {
-            File[] imagesOfCurrentClass = currentDirectory.listFiles(File::isFile);
-            System.out.println("Found images in current class: " + imagesOfCurrentClass.length);
-
-            for (File currentImage : imagesOfCurrentClass) {
-                BufferedImage before = ImageIO.read(currentImage);
-                BufferedImage test = new BufferedImage(28,28,BufferedImage.TYPE_BYTE_GRAY);
-                System.out.println("Before "+before.getType() + " Grey mofo: "+test.getType());
-                //File after = new File(currentImage.getAbsolutePath());
-            }
-        }
-    }
 
 
 }
