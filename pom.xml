@@ -1,3 +1,4 @@
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -8,11 +9,74 @@
     <version>0.20.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.target>18</maven.compiler.target>
         <djl.version>0.20.0</djl.version>
         <spring.version>3.0.0</spring.version>
     </properties>
+
+
+    <!--
+    SET
+    <activation>
+      <activeByDefault>true</activeByDefault>
+    </activation>
+    ON WANTED ENGINE AND OS -->
+    <!-- ENGINES: https://docs.djl.ai/engines/mxnet/mxnet-engine/index.html#macos -->
+    <profiles>
+
+        <profile>
+            <id>MXNET</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>ai.djl.mxnet</groupId>
+                    <artifactId>mxnet-engine</artifactId>
+                    <version>${djl.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>PYTORCH</id>
+            <!--
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            -->
+            <dependencies>
+                <dependency>
+                    <groupId>ai.djl.pytorch</groupId>
+                    <artifactId>pytorch-engine</artifactId>
+                    <version>0.20.0</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>TENSORFLOW</id>
+            <!--
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            -->
+            <dependencies>
+                <dependency>
+                    <groupId>ai.djl.tensorflow</groupId>
+                    <artifactId>tensorflow-engine</artifactId>
+                    <version>0.20.0</version>
+                    <scope>runtime</scope>
+                </dependency>
+
+            </dependencies>
+        </profile>
+
+
+
+    </profiles>
 
     <repositories>
         <repository>
@@ -30,7 +94,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
@@ -39,8 +102,14 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot</artifactId>
+            <artifactId>spring-boot-starter</artifactId>
             <version>${spring.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -48,36 +117,6 @@
             <artifactId>spring-boot-autoconfigure</artifactId>
             <version>${spring.version}</version>
         </dependency>
-
-
-        <dependency>
-            <groupId>ai.djl.mxnet</groupId>
-            <artifactId>mxnet-engine</artifactId>
-            <version>${djl.version}</version>
-        </dependency>
-
-
-
-        <!-- unix gpu
-        <dependency>
-            <groupId>ai.djl.mxnet</groupId>
-            <artifactId>mxnet-native-cu102mkl</artifactId>
-            <classifier>linux-x86_64</classifier>
-            <version>1.9.1</version>
-            <scope>runtime</scope>
-        </dependency>
-        -->
-
-        <!--windows
-        <dependency>
-            <groupId>ai.djl.mxnet</groupId>
-            <artifactId>mxnet-native-mkl</artifactId>
-            <classifier>win-x86_64</classifier>
-            <scope>runtime</scope>
-            <version>1.9.1</version>
-        </dependency>
-        -->
-
 
         <dependency>
             <groupId>ai.djl</groupId>
@@ -90,5 +129,8 @@
             <artifactId>basicdataset</artifactId>
             <version>${djl.version}</version>
         </dependency>
+
+
     </dependencies>
+
 </project>

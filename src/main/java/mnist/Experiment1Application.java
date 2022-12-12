@@ -1,14 +1,10 @@
 package mnist;
 
 import ai.djl.*;
-import ai.djl.basicdataset.cv.ImageDataset;
-import ai.djl.basicdataset.cv.classification.AbstractImageFolder;
-import ai.djl.basicdataset.cv.classification.ImageClassificationDataset;
 import ai.djl.basicdataset.cv.classification.ImageFolder;
 import ai.djl.basicdataset.cv.classification.Mnist;
 import ai.djl.engine.Engine;
 import ai.djl.modality.cv.Image;
-import ai.djl.modality.cv.transform.Normalize;
 import ai.djl.modality.cv.transform.Resize;
 import ai.djl.modality.cv.transform.ToTensor;
 import ai.djl.ndarray.NDArray;
@@ -20,33 +16,20 @@ import ai.djl.nn.core.Linear;
 import ai.djl.nn.pooling.Pool;
 import ai.djl.repository.Repository;
 import ai.djl.training.*;
-import ai.djl.training.dataset.Batch;
-import ai.djl.training.dataset.BatchSampler;
 import ai.djl.training.dataset.Dataset;
-import ai.djl.training.dataset.RandomAccessDataset;
 import ai.djl.training.evaluator.Accuracy;
-import ai.djl.training.evaluator.Evaluator;
 import ai.djl.training.listener.TrainingListener;
 import ai.djl.training.loss.Loss;
 import ai.djl.training.optimizer.Optimizer;
 import ai.djl.training.tracker.Tracker;
 import ai.djl.training.util.ProgressBar;
-
 import ai.djl.translate.TranslateException;
-import ai.djl.util.cuda.CudaUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.lang.management.MemoryUsage;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class Experiment1Application {
@@ -65,7 +48,7 @@ public class Experiment1Application {
         return Xexp.div(partition); // The broadcast mechanism is applied here
     }
     static public NDList softmax(NDList list){
-        for(int i=0; i<list.size();i++){
+        for(int i = 0; i < list.size(); i++){
             list.set(i, softmax(list.get(i)));
         }
         return list;
@@ -133,6 +116,7 @@ public class Experiment1Application {
 
             model.setBlock(sequentialBlock);
             models.add(model);
+
         }
 
         return models;
@@ -141,7 +125,7 @@ public class Experiment1Application {
 
     public static TrainingConfig createTrainingConfig(int trainingSetSize){
 
-        Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.7f);
+        Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.95f);
         Optimizer adam = Optimizer
                 .adam()
                 .optWeightDecays(0.001f) // in default adam von keras aus beispiel nicht verwendet
@@ -177,7 +161,6 @@ public class Experiment1Application {
                 .optFlag(Image.Flag.GRAYSCALE)
                 .build();
 
-        //Image.Flag.GRAYSCALE
         dataset.prepare(new ProgressBar());
 
         System.out.println("Loaded Dataset size "+ dataset.size());

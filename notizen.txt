@@ -173,7 +173,7 @@ anstelle von: trainer.initialize(new Shape(1,28,28));
 (Object src, int srcPos, Object dest, int destPos, int length)
 --> kopiere 5 nach out index 0 eigentlich kein PROBLEM !!!!
 
---> Download Sourves für besseres Debugging als mit Decompiler -->
+--> Download Sources für besseres Debugging als mit Decompiler -->
 
     /*
 
@@ -304,7 +304,7 @@ NDArray
 
 ### Problem: ImageFolder 3 Channel obwohl ich grey scale image brauche
 
---> Viel zu lnage benötigt um:
+--> Viel zu lange benötigt um:
 
  .optFlag(Image.Flag.GRAYSCALE) zu finden
 
@@ -329,8 +329,18 @@ Finden nur möglich indem man implementierte Interfaces und Klassen durchsucht.
 ### Teste verschiedene Engines:
 
 [x] mxnet
-[] pytorch
+[x] pytorch
+--> Funktioniert, aber resultierende Modelle scheinbar nicht äquivalent da mit pytorch im ersten epoch loss -> NaN, während mxnet durchläuft
 [] tensorflow
+- Windows  AMD Ryzen 7 4700U:
+This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Exception in thread "main" java.lang.UnsupportedOperationException: Not supported for TensorFlow Engine
+at ai.djl.tensorflow.engine.TfModel.setBlock(TfModel.java:158)
+model.setBlock(sequentialBlock);
+
+
+
 
 
 ### Performance:
@@ -365,6 +375,4 @@ NUMA:
 
 
   # https://www.nvidia.com/content/DriverDownloads/confirmation.php?url=/XFree86/Linux-x86_64/525.60.11/NVIDIA-Linux-x86_64-525.60.11.run&lang=us&type=TITAN
-
-
 
