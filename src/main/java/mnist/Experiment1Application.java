@@ -17,6 +17,7 @@ import ai.djl.nn.pooling.Pool;
 import ai.djl.repository.Repository;
 import ai.djl.training.*;
 import ai.djl.training.dataset.Dataset;
+import ai.djl.training.dataset.RandomAccessDataset;
 import ai.djl.training.evaluator.Accuracy;
 import ai.djl.training.listener.TrainingListener;
 import ai.djl.training.loss.Loss;
@@ -39,7 +40,7 @@ public class Experiment1Application {
     public static final int epochs = 20;
     public static final int batchSize = 64;
     public static final int numberOfOutputNeurons = 10;
-    public static final float trainingDatasetPercentage = 0.9f;
+    public static final int trainingDatasetRatio = 10;
 
     // https://d2l.djl.ai/chapter_linear-networks/softmax-regression-scratch.html
     static public NDArray softmax(NDArray X) {
@@ -128,7 +129,7 @@ public class Experiment1Application {
         Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.95f);
         Optimizer adam = Optimizer
                 .adam()
-                .optWeightDecays(0.001f) // in default adam von keras aus beispiel nicht verwendet
+                .optWeightDecays(0.01f) // 0.001f // in default adam von keras aus beispiel nicht verwendet, renne onnst aber in Loss NaN
                 .optClipGrad(0.001f) // https://github.com/fizyr/keras-retinanet/issues/942 // in default adam von keras aus beispiel nicht verwendet
                 .optBeta1(0.9f)
                 .optBeta2(0.999f)
@@ -148,7 +149,7 @@ public class Experiment1Application {
 
     // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
     // 2. in assets Folder legen nur trainingSet // Achtung doppelt verschachtelt: trainingSet/trainingSet
-    public static Dataset[] createMnistCustomSimple() throws IOException, TranslateException {
+    public static RandomAccessDataset[] createMnistCustomSimple() throws IOException, TranslateException {
 
         Repository repository = Repository.newInstance("trainingSet", Paths.get("./src/main/resources/data/trainingSet/"));
         System.out.println("Data path: " + Paths.get("./src/main/resources/data/trainingSet/"));
@@ -166,12 +167,8 @@ public class Experiment1Application {
         System.out.println("Loaded Dataset size "+ dataset.size());
         System.out.println("Dataset Classes: "+ dataset.getClasses());
 
-        return dataset.randomSplit(10,1);
+        return dataset.randomSplit(trainingDatasetRatio,1);
     }
-
-
-
-
 
     public static void main(String[] args) {
         SpringApplication.run(Experiment1Application.class, args);
@@ -184,16 +181,15 @@ public class Experiment1Application {
             System.out.println("\n \n Training Model " + models.get(i).getName() + "\n");
 
             try {
-                Dataset[] datasets = createMnistCustomSimple();
-                Dataset trainingDataset = datasets[0];
-                Dataset validationDataset = datasets[1];
+                RandomAccessDataset[] datasets = createMnistCustomSimple();
+                RandomAccessDataset trainingDataset = datasets[0];
+                RandomAccessDataset validationDataset = datasets[1];
 
-                TrainingConfig trainingConfig = createTrainingConfig((int)(42000 * trainingDatasetPercentage));
+                TrainingConfig trainingConfig = createTrainingConfig((int)trainingDataset.size());
                 Trainer trainer = models.get(i).newTrainer(trainingConfig);
                 trainer.initialize(new Shape(batchSize, 1, 28, 28));
 
                 System.out.println("Device used for Training: " + trainer.getDevices()[0].toString() );
-
                 System.out.println("GPU count: " + Engine.getInstance().getGpuCount());
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
@@ -224,7 +220,7 @@ public class Experiment1Application {
         Mnist mnist = Mnist.builder().setSampling(batchSize,false).build();
         mnist.prepare(new ProgressBar());
 
-        int divider = (int)(mnist.size() * trainingDatasetPercentage);
+        int divider = (int)(mnist.size() * (1f - (1.0f/(float) trainingDatasetRatio)));
         Dataset trainingDataset = mnist.subDataset(0,divider);
         Dataset validationDataset = mnist.subDataset(divider,(int)(mnist.size()));
 
