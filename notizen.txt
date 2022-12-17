@@ -377,6 +377,44 @@ NUMA:
   # https://www.nvidia.com/content/DriverDownloads/confirmation.php?url=/XFree86/Linux-x86_64/525.60.11/NVIDIA-Linux-x86_64-525.60.11.run&lang=us&type=TITAN
 
 
+Nvidia Driver update:
+
+sudo sh NVIDIA-Linux-x86_64-525.60.11.run
+
+compatibility yes
+install yes
+kernel modules yes
+utiity yes
+restart yes
+
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/fedora36/x86_64/cuda-fedora36.repo
+sudo dnf clean all
+sudo dnf -y module install nvidia-driver:latest-dkms
+
+Fehler:
+
+Letzte Prüfung auf abgelaufene Metadaten: vor 0:00:39 am Sa 17 Dez 2022 15:44:55 CET.
+Fehler:
+ Problem: package xorg-x11-drv-nvidia-power-3:515.76-1.fc35.x86_64 requires xorg-x11-drv-nvidia(x86-64) = 3:515.76, but none of the providers can be installed
+  - Problem mit installiertem Paket xorg-x11-drv-nvidia-power-3:515.76-1.fc35.x86_64
+  - Paket nvidia-driver-3:525.60.13-1.fc36.x86_64 steht im Konflikt mit xorg-x11-drv-nvidia, das von xorg-x11-drv-nvidia-3:515.76-1.fc35.x86_64 bereitgestellt wird
+  - Paket nvidia-driver-3:525.60.13-1.fc36.x86_64 macht xorg-x11-drv-nvidia obsolet, das von xorg-x11-drv-nvidia-3:515.76-1.fc35.x86_64 bereitgestellt wird
+  - package xorg-x11-drv-nvidia-power-3:470.74-1.fc35.x86_64 requires xorg-x11-drv-nvidia(x86-64) = 3:470.74, but none of the providers can be installed
+  - package xorg-x11-drv-nvidia-power-3:520.56.06-1.fc35.x86_64 requires xorg-x11-drv-nvidia(x86-64) = 3:520.56.06, but none of the providers can be installed
+  - widersprüchliche Anforderungen
+  - Paket xorg-x11-drv-nvidia-3:470.74-1.fc35.x86_64 wird durch modulare Filterung herausgefiltert
+  - Paket xorg-x11-drv-nvidia-3:520.56.06-1.fc35.x86_64 wird durch modulare Filterung herausgefiltert
+(Versuchen Sie '--allowerasing' zur Befehlszeile hinzuzufügen, um Pakete mit Konflikten zu ersetzen or '--skip-broken' to skip uninstallable packages)
+
+LÖSUNG AUF EIGENE GEFAHR:
+
+sudo dnf -y module install nvidia-driver:latest-dkms --allowerasing
+
+
+sudo dnf -y install cuda --allowerasing
+
+
+
 
 ### UPDATE TODOS:
 
@@ -444,3 +482,6 @@ dass du sehr oft mit static Methoden gearbeitet hast. Ist dies von
 Templates abgeleitet oder woher kam das Vorgehen?
 
 --> kein besonderer Grund da aufruf in Main und für simples Beispiel auslagerung in eigene Klasse verwirrend
+
+
+
