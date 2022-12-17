@@ -467,9 +467,9 @@ deines Artikels auf die dann lokalen Dateien verlinkst. Damit sind diese
 für die Ewigkeit bei uns konserviert.
 
 
-[] #4 Javadoc meiner Funktionen
+[x] #4 Javadoc meiner Funktionen
 - [x] djl
-- [] dl4j
+- [x] dl4j
 Schau noch mal bitte über
 Orthographie etc. des wiki Artikels sowie über die Vollständigkeit der
 Codedokumentation (Javadoc) deiner Java Klassen.

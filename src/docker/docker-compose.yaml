@@ -1,5 +1,5 @@
 services:
-  test:
+  gpu:
     image: nvidia/cuda:10.2-base
     command: nvidia-smi
     deploy:
