@@ -331,7 +331,7 @@ Finden nur möglich indem man implementierte Interfaces und Klassen durchsucht.
 [x] mxnet
 [x] pytorch
 --> Funktioniert, aber resultierende Modelle scheinbar nicht äquivalent da mit pytorch im ersten epoch loss -> NaN, während mxnet durchläuft
-[] tensorflow
+[x] tensorflow
 - Windows  AMD Ryzen 7 4700U:
 This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2
 To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
@@ -376,3 +376,71 @@ NUMA:
 
   # https://www.nvidia.com/content/DriverDownloads/confirmation.php?url=/XFree86/Linux-x86_64/525.60.11/NVIDIA-Linux-x86_64-525.60.11.run&lang=us&type=TITAN
 
+
+
+### UPDATE TODOS:
+
+Hallo Alio,
+
+[x] #1 SOFTMAX
+
+mitunter bist du in eine kleine Falle getappt. Für die SoftMax Variante
+des Cross Entropy Losses existieren (bescheuerterweise) mehrere Namen.
+Categorial CE Loss ist quasi synonym mit SoftMax CE Loss verwendbar :)
+Aber es ist gar nicht schlimm, dass du diese als eigene Schichten
+realisiert hast -> dann sehen wir wie die Lösung gestaltet werden muss
+(und dass es überhaupt möglich ist), falls mal etwas exotischeres
+ausprogrammiert werden muss!
+Für die Vollständigkeit - hier:
+https://deeplearning4j.konduit.ai/v/en-1.0.0-beta7/operation-namespaces/loss
+ist fast ganz unten das softmax CE loss für Multiclass (one hot)
+Probleme, wie es beim MNIST vorliegt vom deeplearning4j.
+Hier:
+https://javadoc.io/doc/ai.djl/api/latest/ai/djl/training/loss/package-summary.html
+
+Die loss-Funktionen von DJL auch mit der entsprechenden Klasse für
+Softmax CE loss.
+
+-->  zu softmax
+
+[] #2 GPU TESTEN
+- [] djl
+- [] dl4j
+@GPU: Traust du dir das zu, mal interessehalber zu versuchen die Systeme
+zum Laufen zu bekommen? Falls du die Grafik dabei wegschießt ist nicht
+super schlimm, denn an dem Rechner arbeitet momentan ohnehin niemand
+außer dir. Im Zweifelsfall kommst du dann nicht mehr via nomachine drauf
+sondern nur noch über ssh.
+Interessant dabei wäre, ob du subjektiv/objektiv Unterschiede in der
+Schwierigkeit der Ersteinrichtung festellen kannst. Wenn es gar nicht
+klappt, weil das Ganze viel zu komplex war, ist das auch eine Aussage
+(Spoilerwarnung: zumindest DJL funktioniert auf dem System aber
+definitiv, nur die Einrichtung ist mitunter unangenehm)
+
+
+--> GPU Test
+
+[] #3 Doku nachhaltigkeit
+- [] Datein,Projekte Links,
+Die Dokumentation sieht schon sehr schön und vor allem nutzbringend aus.
+Für die Nahhaltigkeit wäre es auf alle Fälle wichtig, wenn du die
+relevanten Dateien bzw. Projekte direkt im wiki anhängst auch innerhalb
+deines Artikels auf die dann lokalen Dateien verlinkst. Damit sind diese
+für die Ewigkeit bei uns konserviert.
+
+
+[] #4 Javadoc meiner Funktionen
+- [x] djl
+- [] dl4j
+Schau noch mal bitte über
+Orthographie etc. des wiki Artikels sowie über die Vollständigkeit der
+Codedokumentation (Javadoc) deiner Java Klassen.
+
+
+[x] #5 static
+
+Außerdem fiel mir auf,
+dass du sehr oft mit static Methoden gearbeitet hast. Ist dies von
+Templates abgeleitet oder woher kam das Vorgehen?
+
+--> kein besonderer Grund da aufruf in Main und für simples Beispiel auslagerung in eigene Klasse verwirrend

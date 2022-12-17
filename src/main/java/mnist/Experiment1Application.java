@@ -21,6 +21,7 @@ import ai.djl.training.dataset.RandomAccessDataset;
 import ai.djl.training.evaluator.Accuracy;
 import ai.djl.training.listener.TrainingListener;
 import ai.djl.training.loss.Loss;
+import ai.djl.training.loss.SoftmaxCrossEntropyLoss;
 import ai.djl.training.optimizer.Optimizer;
 import ai.djl.training.tracker.Tracker;
 import ai.djl.training.util.ProgressBar;
@@ -42,12 +43,23 @@ public class Experiment1Application {
     public static final int numberOfOutputNeurons = 10;
     public static final int trainingDatasetRatio = 10;
 
-    // https://d2l.djl.ai/chapter_linear-networks/softmax-regression-scratch.html
+    /**
+     * // https://d2l.djl.ai/chapter_linear-networks/softmax-regression-scratch.html
+     * Apply softmax on NDArray and return
+     * @param X {@link NDArray} to apply softmax on
+     * @return {@link NDArray}
+     */
     static public NDArray softmax(NDArray X) {
         NDArray Xexp = X.exp(); // Returns the exponential value of this NDArray element-wise.
         NDArray partition = Xexp.sum(new int[]{1}, true);
         return Xexp.div(partition); // The broadcast mechanism is applied here
     }
+
+    /**
+     * applying {@link #softmax(NDArray) } to every {@link NDArray} contained in passed {@link NDList}
+     * @param list {@link NDList}
+     * @return {@link NDList}
+     */
     static public NDList softmax(NDList list){
         for(int i = 0; i < list.size(); i++){
             list.set(i, softmax(list.get(i)));
@@ -55,7 +67,21 @@ public class Experiment1Application {
         return list;
     }
 
-    static public Block createConv2dLayer(int kernelSize, int features, int stride, int padding) {
+
+    /**
+     * Creates conv2dLayer
+     * @param kernelSize Size of Kernel -> Produces Shape(kernelSize,kernelSize)
+     * @param features number of Filters to use
+     * @param stride produces Shape(stride,stride) for stride
+     * @param padding produces Shape(padding,padding) for padding
+     * @return block Containing Conv2d Layer
+     */
+    static public Block createConv2dLayer(
+            int kernelSize,
+            int features,
+            int stride,
+            int padding)
+    {
         return Conv2d.builder()
                 .setKernelShape(new Shape(kernelSize,kernelSize))
                 .setFilters(features)
@@ -64,15 +90,32 @@ public class Experiment1Application {
                 .build();
     }
 
+    /**
+     * Creates maxPool2dBlock with valid padding
+     * kernel: Shape(2,2)
+     * @return {@link Block} created from {@link Pool}
+     */
     static public Block maxPoolValid() {
         return Pool.maxPool2dBlock(new Shape(2,2));
     }
 
+    /**
+     * Creates maxPool2dBlock with same padding
+     * kernel: Shape(2,2)
+     * stride: Shape(1,1)
+     * padding: Shape(1,1)
+     * @return {@link Block} created from {@link Pool}
+     */
     static public Block maxPoolSame() {
         // kernel Size, stride, padding
         return Pool.maxPool2dBlock(new Shape(2,2), new Shape(1,1), new Shape(1,1));
     }
 
+    /** <pre>
+     * Creates Models from https://www.kaggle.com/code/cdeotte/how-to-choose-cnn-architecture-mnist/notebook
+     * @return List of the 3 created Models {@link ArrayList<Model>}
+     * </pre>
+     * **/
     static public ArrayList<Model> createModels() {
 
         ArrayList<Model> models = new ArrayList<>();
@@ -124,9 +167,13 @@ public class Experiment1Application {
     }
 
 
-    public static TrainingConfig createTrainingConfig(int trainingSetSize){
+    /**
+     * Creates a {@link TrainingConfig} with adam {@link Optimizer} and {@link SoftmaxCrossEntropyLoss}
+     * @param tracker {@link Tracker} LearningRateTracker to update LearningRate
+     * @return {@link TrainingConfig}
+     */
+    public static TrainingConfig createTrainingConfig(Tracker tracker){
 
-        Tracker annealer = new Annealer(batchSize,trainingSetSize,1E-3f,0.95f);
         Optimizer adam = Optimizer
                 .adam()
                 .optWeightDecays(0.01f) // 0.001f // in default adam von keras aus beispiel nicht verwendet, renne onnst aber in Loss NaN
@@ -134,70 +181,115 @@ public class Experiment1Application {
                 .optBeta1(0.9f)
                 .optBeta2(0.999f)
                 .optEpsilon(1e-7f)
-                .optLearningRateTracker(annealer)
+                .optLearningRateTracker(tracker)
                 .build();
 
-        // softmaxCrossEntropyLoss anstelle von  categorical_crossentropy
-        TrainingConfig trainingConfig = new DefaultTrainingConfig(Loss.softmaxCrossEntropyLoss())
+        return new DefaultTrainingConfig(Loss.softmaxCrossEntropyLoss())
                 .optOptimizer(adam)
                 .addEvaluator(new Accuracy())
-                .optDevices(Engine.getInstance().getDevices())
                 .addTrainingListeners(TrainingListener.Defaults.logging());
-
-        return trainingConfig;
     }
 
+
+    // Developer note to find data download of mnist
     // 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
     // 2. in assets Folder legen nur trainingSet // Achtung doppelt verschachtelt: trainingSet/trainingSet
-    public static RandomAccessDataset[] createMnistCustomSimple() throws IOException, TranslateException {
 
-        Repository repository = Repository.newInstance("trainingSet", Paths.get("./src/main/resources/data/trainingSet/"));
-        System.out.println("Data path: " + Paths.get("./src/main/resources/data/trainingSet/"));
+    /**<pre>
+     * Requirements for mnist example:
+     * 1. Download data from: https://www.kaggle.com/datasets/scolianni/mnistasjpg?resource=download
+     * 2. Put in asset folder // Note archiv Structure of related mnist Dataset: trainingSet/trainingSet
+     *
+     * Can be used to create a Dataset for any kind od Image Classification
+     * Images are seperated by Class in separate Folders, Foldernames are the class names
+     *
+     * Example Structure:
+     * folderName: trainingDataset
+     * path: path to Folder containing trainingDataset
+     * trainingDatasets contains Folders with names: 0,1,2,3,4,5,6,7,8,9
+     * Folders 0,1,2,3,4,5,6,7,8,9 contain images of that class
+     *<pre>
+     * @param folderName {@link String} folderName containing the TraininData
+     * @param path {@link String} path of folder with Trainingdata without actual folder name
+     * @param imageResize {@link Resize} Size Images should be Transformed to
+     * @param batchSize {@link Integer} BatchSize
+     * @param channelFlag {@link Image.Flag} flag to choose between Greyscale or Colored
+     * @param random boolean set random Flag
+     * @param trainingDatasetRatio {@link Integer} applies trainingDatasetRatio : 1 to Dataset split
+     * @return TrainingSet at index 0 and ValidationSet at index 1
+     * @throws IOException  {@link IOException}
+     * @throws TranslateException  {@link TranslateException}
+     */
+    public static RandomAccessDataset[] createMnistCustomSimple(
+            String folderName,
+            String path,
+            Resize imageResize,
+            Integer batchSize,
+            Image.Flag channelFlag,
+            boolean random,
+            Integer trainingDatasetRatio
+    ) throws IOException, TranslateException {
+
+        Repository repository = Repository.newInstance(folderName, Paths.get(path));
+        logger.fine("Dataset Path: "+ repository.getBaseUri().getPath());
 
         ImageFolder dataset = ImageFolder.builder()
                 .setRepository(repository)
-                .addTransform(new Resize(28, 28))
+                .addTransform(imageResize)
                 .addTransform(new ToTensor())
-                .setSampling(batchSize, true)
-                .optFlag(Image.Flag.GRAYSCALE)
+                .setSampling(batchSize, random)
+                .optFlag(channelFlag)
                 .build();
 
         dataset.prepare(new ProgressBar());
 
-        System.out.println("Loaded Dataset size "+ dataset.size());
-        System.out.println("Dataset Classes: "+ dataset.getClasses());
+        logger.info("Loaded Dataset size "+ dataset.size());
+        logger.info("Dataset Classes: "+ dataset.getClasses());
 
         return dataset.randomSplit(trainingDatasetRatio,1);
     }
+
 
     public static void main(String[] args) {
         SpringApplication.run(Experiment1Application.class, args);
 
         logger.info("Start");
 
+        int width = 28;
+        int height = 28;
         ArrayList<Model> models = createModels();
 
-        for(int i = 0; i < models.size(); i++) {
-            System.out.println("\n \n Training Model " + models.get(i).getName() + "\n");
+        for (Model model : models) {
+            logger.info("\n \n Training Model " + model.getName() + "\n");
 
             try {
-                RandomAccessDataset[] datasets = createMnistCustomSimple();
+
+                RandomAccessDataset[] datasets = createMnistCustomSimple(
+                        "trainingSet",
+                        "./src/main/resources/data/trainingSet/",
+                        new Resize(width,height),
+                        batchSize,
+                        Image.Flag.GRAYSCALE,
+                        true,
+                        trainingDatasetRatio
+                );
                 RandomAccessDataset trainingDataset = datasets[0];
                 RandomAccessDataset validationDataset = datasets[1];
 
-                TrainingConfig trainingConfig = createTrainingConfig((int)trainingDataset.size());
-                Trainer trainer = models.get(i).newTrainer(trainingConfig);
-                trainer.initialize(new Shape(batchSize, 1, 28, 28));
+                Tracker annealer = new Annealer(batchSize,(int) trainingDataset.size(),1E-3f,0.95f);
+                TrainingConfig trainingConfig = createTrainingConfig(annealer);
+                Trainer trainer = model.newTrainer(trainingConfig);
+                trainer.initialize(new Shape(batchSize, 1, width, height));
 
-                System.out.println("Device used for Training: " + trainer.getDevices()[0].toString() );
-                System.out.println("GPU count: " + Engine.getInstance().getGpuCount());
+                logger.info("Device used for Training: " + trainer.getDevices()[0].toString());
+                logger.info("GPU count: " + Engine.getInstance().getGpuCount());
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
                 TrainingResult result = trainer.getTrainingResult();
                 trainer.close();
                 System.out.println(result);
 
-            }catch (Exception e) {
+            } catch (Exception e) {
                 System.out.println(e.getMessage());
                 System.exit(-1);
             }
@@ -209,10 +301,12 @@ public class Experiment1Application {
     }
 
 
-
-
-    // Get Training and validiation Dataset
-    // EXAMPLE WITH Ready to go mnist Dataset provided by DJL
+    /**
+     * Create Mnist Training and Validation Dataset from {@link Mnist} provided by DJL
+     * @return Array of {@link Dataset} TrainingDataset at index 0 and ValidationDataset at index 1
+     * @throws TranslateException {@link TranslateException}
+     * @throws IOException {@link IOException}
+     */
     public static Dataset[] splitMnist() throws TranslateException, IOException {
 
         Dataset[] datasets = new Dataset[2];
@@ -224,14 +318,13 @@ public class Experiment1Application {
         Dataset trainingDataset = mnist.subDataset(0,divider);
         Dataset validationDataset = mnist.subDataset(divider,(int)(mnist.size()));
 
-
         trainingDataset.prepare(new ProgressBar());
         validationDataset.prepare(new ProgressBar());
 
         datasets[0] = trainingDataset;
         datasets[1] = validationDataset;
 
-        System.out.println(
+        logger.info(
                 "Datesets: mnist: " + mnist.size() +
                         " training: " + divider +
                         " validationDatasetSize: " + (mnist.size() - divider)
