@@ -382,8 +382,8 @@ NUMA:
 
 Hallo Alio,
 
-[x] #1 SOFTMAX
-
+[] #1 SOFTMAX
+- [] IN WIKI INFO ÄNDERN !
 mitunter bist du in eine kleine Falle getappt. Für die SoftMax Variante
 des Cross Entropy Losses existieren (bescheuerterweise) mehrere Namen.
 Categorial CE Loss ist quasi synonym mit SoftMax CE Loss verwendbar :)
