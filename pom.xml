@@ -8,82 +8,19 @@
     <artifactId>examples</artifactId>
     <version>0.20.0-SNAPSHOT</version>
 
-    <properties>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
-        <djl.version>0.20.0</djl.version>
-        <spring.version>3.0.0</spring.version>
-    </properties>
-
-
-    <!--
-    SET
-    <activation>
-      <activeByDefault>true</activeByDefault>
-    </activation>
-    ON WANTED ENGINE AND OS -->
-    <!-- ENGINES: https://docs.djl.ai/engines/mxnet/mxnet-engine/index.html#macos -->
-    <profiles>
-
-        <profile>
-            <id>MXNET</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>ai.djl.mxnet</groupId>
-                    <artifactId>mxnet-engine</artifactId>
-                    <version>${djl.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>PYTORCH</id>
-            <!--
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            -->
-            <dependencies>
-                <dependency>
-                    <groupId>ai.djl.pytorch</groupId>
-                    <artifactId>pytorch-engine</artifactId>
-                    <version>0.20.0</version>
-                    <scope>runtime</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>TENSORFLOW</id>
-            <!--
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            -->
-            <dependencies>
-                <dependency>
-                    <groupId>ai.djl.tensorflow</groupId>
-                    <artifactId>tensorflow-engine</artifactId>
-                    <version>0.20.0</version>
-                    <scope>runtime</scope>
-                </dependency>
-
-            </dependencies>
-        </profile>
-
-
-
-    </profiles>
-
     <repositories>
         <repository>
             <id>djl.ai</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
     </repositories>
+
+    <properties>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
+        <djl.version>0.20.0</djl.version>
+        <spring.version>3.0.0</spring.version>
+    </properties>
 
     <dependencyManagement>
         <dependencies>
@@ -94,11 +31,15 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
-
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -118,6 +59,13 @@
             <version>${spring.version}</version>
         </dependency>
 
+
+        <dependency>
+            <groupId>ai.djl.mxnet</groupId>
+            <artifactId>mxnet-engine</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>ai.djl</groupId>
             <artifactId>api</artifactId>
@@ -132,5 +80,15 @@
 
 
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 
 </project>

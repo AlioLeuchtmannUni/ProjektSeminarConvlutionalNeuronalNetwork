@@ -413,6 +413,49 @@ sudo dnf -y module install nvidia-driver:latest-dkms --allowerasing
 
 sudo dnf -y install cuda --allowerasing
 
+### install Cudnn
+https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html
+
+https://developer.nvidia.com/rdp/cudnn-archive
+
+--> download cudnn
+
+ >>>> := meine Variante -> andere allgemein Version muss je nach heruntergeladener angepasst werden
+
+ tar -xvf cudnn-linux-x86_64-8.x.x.x_cudaX.X-archive.tar.xz
+ >>>> tar -xvf cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz
+
+ sudo cp cudnn-*-archive/include/cudnn*.h /usr/local/cuda/include
+ >>>> sudo cp cudnn-linux-x86_64-8.6.0.163_cuda11-archive/include/cudnn*.h /usr/local/cuda-10.1/targets/x86_64-linux/include
+
+ sudo cp -P cudnn-*-archive/lib/libcudnn* /usr/local/cuda/lib64
+ >>>> sudo cp -P cudnn-linux-x86_64-8.6.0.163_cuda11-archive/lib/libcudnn* /usr/local/cuda-10.1/targets/x86_64-linux/lib
+
+ sudo chmod a+r /usr/local/cuda/include/cudnn*.h /usr/local/cuda/lib64/libcudnn*
+ >>>> sudo chmod a+r /usr/local/cuda-10.1/targets/x86_64-linux/include/cudnn*.h /usr/local/cuda-10.1/targets/x86_64-linux/lib/libcudnn*
+
+### install NCCL
+
+https://developer.nvidia.com/nccl/nccl-download
+>>> bei mir fedora OS agnostic installer
+
+tar xvf nccl-<version>.txz
+>>> tar xvf nccl-<version>.txz
+
+
+### Docker variante
+
+#### requirements:
+- docker ad docker-compose on host pc
+- install nvidia docker, see below
+
+#### install nvidia-docker
+curl -s -L https://nvidia.github.io/libnvidia-container/centos8/libnvidia-container.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+sudo dnf install nvidia-docker2
+sudo vi /etc/nvidia-container-runtime/config.toml
+uncomment no-cgroups
+
+READY TO GO
 
 
 
@@ -465,6 +508,8 @@ Für die Nahhaltigkeit wäre es auf alle Fälle wichtig, wenn du die
 relevanten Dateien bzw. Projekte direkt im wiki anhängst auch innerhalb
 deines Artikels auf die dann lokalen Dateien verlinkst. Damit sind diese
 für die Ewigkeit bei uns konserviert.
+- [] Projekte hochladen
+- []
 
 
 [x] #4 Javadoc meiner Funktionen

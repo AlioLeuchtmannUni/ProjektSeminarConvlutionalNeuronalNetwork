@@ -4,7 +4,7 @@
 #### Command Line
 
 Unix:
-./mvnw install &&./mvnw spring-boot:run
+sudo mvn install && sudo mvn spring-boot:run
 
 Windows:
 ./mvnw install ; ./mvnw spring-boot:run

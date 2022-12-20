@@ -2,10 +2,15 @@ services:
   gpu:
     image: nvidia/cuda:10.2-base
     command: nvidia-smi
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    entrypoint: ["bash","/code/src/docker/start.sh"]
+    volumes:
+      - type: bind
+        source: ../../
+        target: ./code/
+    #deploy:
+    #  resources:
+    #    reservations:
+    #      devices:
+    #        - driver: nvidia
+    #          count: 1
+    #          capabilities: [gpu]
