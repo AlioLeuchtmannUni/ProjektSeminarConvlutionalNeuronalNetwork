@@ -6,7 +6,7 @@ services:
     volumes:
       - type: bind
         source: ../../
-        target: ./code/
+        target: /code/
     #deploy:
     #  resources:
     #    reservations:

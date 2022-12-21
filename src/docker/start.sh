@@ -1,4 +1,7 @@
 #!/bin/bash
 
 
-echo 'here we go here we go versacci domino'
+echo 'staring spring'
+
+
+#mvn install && mvn spring-boot:run

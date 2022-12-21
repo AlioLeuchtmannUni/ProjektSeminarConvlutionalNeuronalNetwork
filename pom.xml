@@ -67,6 +67,22 @@
         </dependency>
 
         <dependency>
+            <groupId>ai.djl.mxnet</groupId>
+            <artifactId>mxnet-native-cu112mkl</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <version>1.9.1</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>ai.djl.mxnet</groupId>
+            <artifactId>mxnet-native-cu102mkl</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <version>1.9.1</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>ai.djl</groupId>
             <artifactId>api</artifactId>
             <version>${djl.version}</version>
