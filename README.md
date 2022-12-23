@@ -22,4 +22,7 @@ cd src/docker
 docker build -t cuda-java ./
 docker-compose up
 
-Note: may require sudo, some installations require docker compose instead of docker-compose
+Note: 
+- may require sudo
+- some installations require docker compose instead of docker-compose
+- make sure ./mvnw is executable without sudo

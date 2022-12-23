@@ -26,6 +26,7 @@ import ai.djl.training.optimizer.Optimizer;
 import ai.djl.training.tracker.Tracker;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
+import ai.djl.util.cuda.CudaUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.IOException;
@@ -285,6 +286,8 @@ public class Experiment1Application {
                 logger.info(devices.length + " devices found on System "+ "containing " + Engine.getInstance().getGpuCount() + " Gpus");
 
                 logger.info("Devices used for Training: " + trainer.getDevices().length);
+                logger.info("Cuda utils found "+CudaUtils.getGpuCount()+ " Gpus");
+                logger.info("Cuda detected: "+CudaUtils.hasCuda());
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
                 TrainingResult result = trainer.getTrainingResult();
