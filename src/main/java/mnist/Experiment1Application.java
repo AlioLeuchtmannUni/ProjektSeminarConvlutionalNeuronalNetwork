@@ -256,6 +256,17 @@ public class Experiment1Application {
 
         logger.info("Start");
 
+        Device[] devices = Engine.getInstance().getDevices();
+        logger.info(devices.length + " devices found on System "+ "containing " + Engine.getInstance().getGpuCount() + " Gpus");
+
+        for(int i = 0; i<devices.length; i++){
+            Device device = devices[i];
+            logger.info("Device("+i+"): "+device.getDeviceType()+" "+device.toString());
+        }
+
+        logger.info("Cuda utils found "+CudaUtils.getGpuCount()+ " Gpus");
+        logger.info("Cuda detected: "+CudaUtils.hasCuda());
+
         int width = 28;
         int height = 28;
         ArrayList<Model> models = createModels();
@@ -282,17 +293,7 @@ public class Experiment1Application {
                 Trainer trainer = model.newTrainer(trainingConfig);
                 trainer.initialize(new Shape(batchSize, 1, width, height));
 
-                Device[] devices = Engine.getInstance().getDevices();
-                logger.info(devices.length + " devices found on System "+ "containing " + Engine.getInstance().getGpuCount() + " Gpus");
-
-                for(int i = 0; i<devices.length; i++){
-                    Device device = devices[i];
-                    logger.info("Device("+i+"): "+device.getDeviceType()+" "+device.toString());
-                }
-
-                logger.info("Devices used for Training: " + trainer.getDevices().length);
-                logger.info("Cuda utils found "+CudaUtils.getGpuCount()+ " Gpus");
-                logger.info("Cuda detected: "+CudaUtils.hasCuda());
+                logger.info("Devices used for Training: " + trainer.getDevices()[0].getDeviceType());
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
                 TrainingResult result = trainer.getTrainingResult();

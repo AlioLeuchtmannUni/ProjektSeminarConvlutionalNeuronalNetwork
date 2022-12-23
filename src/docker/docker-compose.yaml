@@ -1,5 +1,5 @@
 services:
-  gpu:
+  djl-gpu:
     image: cuda-java
     command: nvidia-smi
     entrypoint: ["bash","/code/src/docker/start.sh"]
