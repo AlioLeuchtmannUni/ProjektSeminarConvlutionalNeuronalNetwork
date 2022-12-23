@@ -209,8 +209,8 @@ public class Experiment1Application {
      * trainingDatasets contains Folders with names: 0,1,2,3,4,5,6,7,8,9
      * Folders 0,1,2,3,4,5,6,7,8,9 contain images of that class
      *<pre>
-     * @param folderName {@link String} folderName containing the TraininData
-     * @param path {@link String} path of folder with Trainingdata without actual folder name
+     * @param folderName {@link String} folderName containing the Training Data
+     * @param path {@link String} Path to Folder containing the Training Data
      * @param imageResize {@link Resize} Size Images should be Transformed to
      * @param batchSize {@link Integer} BatchSize
      * @param channelFlag {@link Image.Flag} flag to choose between Greyscale or Colored
@@ -266,7 +266,7 @@ public class Experiment1Application {
 
                 RandomAccessDataset[] datasets = createMnistCustomSimple(
                         "trainingSet",
-                        "./src/main/resources/data/trainingSet/",
+                        "./data/trainingSet",
                         new Resize(width,height),
                         batchSize,
                         Image.Flag.GRAYSCALE,
@@ -281,8 +281,10 @@ public class Experiment1Application {
                 Trainer trainer = model.newTrainer(trainingConfig);
                 trainer.initialize(new Shape(batchSize, 1, width, height));
 
-                logger.info("Device used for Training: " + trainer.getDevices()[0].toString());
-                logger.info("GPU count: " + Engine.getInstance().getGpuCount());
+                Device[] devices = Engine.getInstance().getDevices();
+                logger.info(devices.length + " devices found on System "+ "containing " + Engine.getInstance().getGpuCount() + " Gpus");
+
+                logger.info("Devices used for Training: " + trainer.getDevices().length);
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
                 TrainingResult result = trainer.getTrainingResult();

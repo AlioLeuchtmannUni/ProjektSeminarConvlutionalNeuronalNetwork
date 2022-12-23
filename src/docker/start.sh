@@ -1,7 +1,15 @@
 #!/bin/bash
 
+echo 'starting spring boot'
 
-echo 'staring spring'
+cd code
+
+echo 'installing dependencies'
+
+./mvnw install
+
+echo 'start programm'
+
+./mvnw spring-boot:run
 
 
-#mvn install && mvn spring-boot:run

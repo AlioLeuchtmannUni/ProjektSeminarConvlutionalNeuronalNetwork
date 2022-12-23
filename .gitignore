@@ -35,4 +35,4 @@ build/
 
 ### Project Specific ###
 
-/src/main/resources/data/**
+/data/**
