@@ -6,7 +6,7 @@ cd code
 
 echo 'installing dependencies'
 
-./mvnw install
+./mvnw clean install
 
 echo 'start programm'
 
