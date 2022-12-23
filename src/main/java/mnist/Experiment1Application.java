@@ -285,6 +285,11 @@ public class Experiment1Application {
                 Device[] devices = Engine.getInstance().getDevices();
                 logger.info(devices.length + " devices found on System "+ "containing " + Engine.getInstance().getGpuCount() + " Gpus");
 
+                for(int i = 0; i<devices.length; i++){
+                    Device device = devices[i];
+                    logger.info("Device("+i+"): "+device.getDeviceType()+" "+device.toString());
+                }
+
                 logger.info("Devices used for Training: " + trainer.getDevices().length);
                 logger.info("Cuda utils found "+CudaUtils.getGpuCount()+ " Gpus");
                 logger.info("Cuda detected: "+CudaUtils.hasCuda());
