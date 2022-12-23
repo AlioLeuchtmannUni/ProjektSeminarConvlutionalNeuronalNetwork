@@ -66,6 +66,7 @@
             <version>${djl.version}</version>
         </dependency>
 
+
         <dependency>
             <groupId>ai.djl.mxnet</groupId>
             <artifactId>mxnet-native-cu112mkl</artifactId>
@@ -74,7 +75,7 @@
         </dependency>
 
 
-        <!--
+        <!-- 10.2
         <dependency>
             <groupId>ai.djl.mxnet</groupId>
             <artifactId>mxnet-native-cu102mkl</artifactId>

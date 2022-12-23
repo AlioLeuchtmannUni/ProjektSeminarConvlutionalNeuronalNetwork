@@ -40,7 +40,7 @@ public class Experiment1Application {
     static final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     public static final int numberOfModels = 3;
     public static final int epochs = 20;
-    public static final int batchSize = 64;
+    public static final int batchSize = 300;
     public static final int numberOfOutputNeurons = 10;
     public static final int trainingDatasetRatio = 10;
 
@@ -276,7 +276,7 @@ public class Experiment1Application {
 
             try {
 
-                RandomAccessDataset[] datasets = createMnistCustomSimple(
+                RandomAccessDataset[] datasets = splitMnist(); /*createMnistCustomSimple(
                         "trainingSet",
                         "./data/trainingSet",
                         new Resize(width,height),
@@ -285,6 +285,7 @@ public class Experiment1Application {
                         true,
                         trainingDatasetRatio
                 );
+                */
                 RandomAccessDataset trainingDataset = datasets[0];
                 RandomAccessDataset validationDataset = datasets[1];
 
@@ -296,6 +297,8 @@ public class Experiment1Application {
                 logger.info("Devices used for Training: " + trainer.getDevices()[0].getDeviceType());
 
                 EasyTrain.fit(trainer, epochs, trainingDataset, validationDataset);
+
+
                 TrainingResult result = trainer.getTrainingResult();
                 trainer.close();
                 System.out.println(result);
@@ -318,16 +321,16 @@ public class Experiment1Application {
      * @throws TranslateException {@link TranslateException}
      * @throws IOException {@link IOException}
      */
-    public static Dataset[] splitMnist() throws TranslateException, IOException {
+    public static RandomAccessDataset[] splitMnist() throws TranslateException, IOException {
 
-        Dataset[] datasets = new Dataset[2];
+        RandomAccessDataset[] datasets = new RandomAccessDataset[2];
 
         Mnist mnist = Mnist.builder().setSampling(batchSize,false).build();
         mnist.prepare(new ProgressBar());
 
         int divider = (int)(mnist.size() * (1f - (1.0f/(float) trainingDatasetRatio)));
-        Dataset trainingDataset = mnist.subDataset(0,divider);
-        Dataset validationDataset = mnist.subDataset(divider,(int)(mnist.size()));
+        RandomAccessDataset trainingDataset = mnist.subDataset(0,divider);
+        RandomAccessDataset validationDataset = mnist.subDataset(divider,(int)(mnist.size()));
 
         trainingDataset.prepare(new ProgressBar());
         validationDataset.prepare(new ProgressBar());
