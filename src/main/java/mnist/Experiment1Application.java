@@ -40,7 +40,7 @@ public class Experiment1Application {
     static final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     public static final int numberOfModels = 3;
     public static final int epochs = 20;
-    public static final int batchSize = 300;
+    public static final int batchSize = 64;
     public static final int numberOfOutputNeurons = 10;
     public static final int trainingDatasetRatio = 10;
 
@@ -271,12 +271,9 @@ public class Experiment1Application {
         int height = 28;
         ArrayList<Model> models = createModels();
 
-        for (Model model : models) {
-            logger.info("\n \n Training Model " + model.getName() + "\n");
+        try {
 
-            try {
-
-                RandomAccessDataset[] datasets = splitMnist(); /*createMnistCustomSimple(
+            RandomAccessDataset[] datasets  = createMnistCustomSimple(
                         "trainingSet",
                         "./data/trainingSet",
                         new Resize(width,height),
@@ -285,9 +282,12 @@ public class Experiment1Application {
                         true,
                         trainingDatasetRatio
                 );
-                */
-                RandomAccessDataset trainingDataset = datasets[0];
-                RandomAccessDataset validationDataset = datasets[1];
+
+            RandomAccessDataset trainingDataset = datasets[0];
+            RandomAccessDataset validationDataset = datasets[1];
+
+        for (Model model : models) {
+            logger.info("\n \n Training Model " + model.getName() + "\n");
 
                 Tracker annealer = new Annealer(batchSize,(int) trainingDataset.size(),1E-3f,0.95f);
                 TrainingConfig trainingConfig = createTrainingConfig(annealer);
@@ -303,10 +303,11 @@ public class Experiment1Application {
                 trainer.close();
                 System.out.println(result);
 
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-                System.exit(-1);
-            }
+        }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.exit(-1);
         }
 
         logger.info("End");
